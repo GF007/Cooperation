@@ -35,10 +35,12 @@ int main(int argc, char* argv[])
 #include <stdio.h>
 #include <string>
 #include <cmath>
+#include "model.h"
+#include "geometry.h"
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 512;
-const int SCREEN_HEIGHT = 512;
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 1024;
 
 //Starts up SDL and creates window
 bool init();
@@ -51,7 +53,7 @@ SDL_Window* gWindow = NULL;
 
 //The window renderer
 SDL_Renderer* gRenderer = NULL;
-
+Model *model = NULL;
 bool init()
 {
 	//Initialization flag
@@ -103,6 +105,7 @@ void close()
 
 	//Quit SDL subsystems
 	SDL_Quit();
+	delete model;
 }
 
 void SDLDrawPixel(int x, int y)
@@ -110,6 +113,85 @@ void SDLDrawPixel(int x, int y)
 	SDL_RenderDrawPoint(gRenderer, x, SCREEN_HEIGHT - 1 - y);
 }
 
+//绘制线段函数，处理翻转和过高逻辑。
+void line(int x0, int y0, int x1, int y1) {
+	bool steep = false;
+	if (std::abs(x0-x1)<std::abs(y0-y1))
+	//如果线段在平面上长小于高，那么转置
+	{
+		std::swap(x0, y0);
+		std::swap(x0, y1);
+		steep = true;
+	}
+	if (x0>x1)
+	{
+	//如果x0小于x1，那么左右翻转
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+
+	}
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int derror2 = std::abs(dy*2);
+	int error2 = 0;
+	int y = y0;
+	for ( int x=x0;x<=x1;x++)
+	{
+		if (steep)
+		{
+		//如果是转置的图像，那么反转回来
+			SDLDrawPixel(y, x);
+		}
+		else
+		{
+			SDLDrawPixel(x, y);
+		}
+		error2 += derror2;
+		if (error2>dx)
+		{
+			y += (y1 > y0 ? 1 : -1);
+			error2 -= dx*2;
+		}
+	}
+
+
+
+}
+
+/*
+void line(int x0, int y0, int x1, int y1) {
+	bool steep = false;
+	if (std::abs(x0 - x1) < std::abs(y0 - y1))
+		//如果线段在平面上长小于高，那么转置
+	{
+		std::swap(x0, y0);
+		std::swap(x0, y1);
+		steep = true;
+	}
+	if (x0 > x1)
+	{
+		//如果x0小于x1，那么左右翻转
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+
+	}
+
+	for (int x = x0; x <= x1; x++)
+	{
+		float t = (x - x0) / (float)(x1 - x0);
+		int y = y0*(1. - t) + y1 * t;
+		if (steep)
+		{
+			//如果是转置的图像，那么反转回来
+			SDLDrawPixel(y, x);
+		}
+		else
+		{
+			SDLDrawPixel(x, y);
+		}
+	}
+}
+*/
 int main(int argc, char* args[])
 {
 	//Start up SDL and create window
@@ -140,17 +222,37 @@ int main(int argc, char* args[])
 			//Clear screen
 			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 0xFF);
 			SDL_RenderClear(gRenderer);
+			//--------------------主渲染代码--------------------
+			//DrawLineTest
+			/*
+			for (int i = 0;i<=10000;i++)
+			{
+				SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
+				line(13, 20, 80, 40);
+				SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
+				line(20, 13, 40, 80);
+				SDL_SetRenderDrawColor(gRenderer, 0, 0, 255, 255);
+				line(80, 40, 13, 20);
+			}
+			*/
+			SDL_SetRenderDrawColor(gRenderer, 0, 0, 255, 255);
+			model = new Model("obj/african_head.obj");
+			//model = new Model("obj/Testbox.obj");
+			for (int i = 0; i < model->nfaces(); i++)
+			{
+				std::vector<int> face = model->face(i);
+				for (int j = 0;j<3;j++)
+				{
+					Vec3f v0 = model->vert(face[j]);
+					Vec3f v1 = model->vert(face[(j + 1)%3 ]);
+					int x0 = (v0.x + 1.)*SCREEN_WIDTH / 2;
+					int y0 = (v0.y + 1.)*SCREEN_HEIGHT /2;
+					int x1 = (v1.x + 1.)*SCREEN_WIDTH / 2;
+					int y1 = (v1.y + 1.)*SCREEN_HEIGHT /2;
+					line(x0, y0, x1, y1);
 
-			//Draw vertical line of yellow dots
-			SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
-			//for (int i = 0; i < SCREEN_HEIGHT; i++)
-			//{
-			//	SDLDrawPixel(SCREEN_WIDTH / 2, i);
-			//}
-
-
-			SDLDrawPixel(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-
+				}
+			}
 			//Update screen
 			SDL_RenderPresent(gRenderer);
 		}

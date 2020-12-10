@@ -116,46 +116,36 @@ void SDLDrawPixel(int x, int y)
 //绘制线段函数，处理翻转和过高逻辑。
 void line(int x0, int y0, int x1, int y1) {
 	bool steep = false;
-	if (std::abs(x0-x1)<std::abs(y0-y1))
+	if (std::abs(x0-x1)<std::abs(y0-y1)){
 	//如果线段在平面上长小于高，那么转置
-	{
 		std::swap(x0, y0);
-		std::swap(x0, y1);
+		std::swap(x1, y1);
 		steep = true;
 	}
-	if (x0>x1)
-	{
-	//如果x0小于x1，那么左右翻转
+	if (x0>x1){
+	//如果x0大于x1，那么左右翻转
 		std::swap(x0, x1);
 		std::swap(y0, y1);
-
 	}
 	int dx = x1 - x0;
 	int dy = y1 - y0;
 	int derror2 = std::abs(dy*2);
 	int error2 = 0;
 	int y = y0;
-	for ( int x=x0;x<=x1;x++)
-	{
-		if (steep)
-		{
+	for ( int x=x0;x<=x1;x++){
+		if (steep){
 		//如果是转置的图像，那么反转回来
 			SDLDrawPixel(y, x);
 		}
-		else
-		{
+		else{
 			SDLDrawPixel(x, y);
 		}
 		error2 += derror2;
-		if (error2>dx)
-		{
+		if (error2>dx){
 			y += (y1 > y0 ? 1 : -1);
 			error2 -= dx*2;
 		}
 	}
-
-
-
 }
 
 /*
@@ -225,16 +215,16 @@ int main(int argc, char* args[])
 			//--------------------主渲染代码--------------------
 			//DrawLineTest
 			/*
-			for (int i = 0;i<=10000;i++)
+			for (int i = 0;i<=1;i++)
 			{
 				SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
-				line(13, 20, 80, 40);
+				line(65, 100, 400, 200);
 				SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
-				line(20, 13, 40, 80);
+				line(100, 65, 200, 400);
 				SDL_SetRenderDrawColor(gRenderer, 0, 0, 255, 255);
-				line(80, 40, 13, 20);
-			}
-			*/
+				line(400, 200, 65, 100);
+			}*/
+			
 			SDL_SetRenderDrawColor(gRenderer, 0, 0, 255, 255);
 			model = new Model("obj/african_head.obj");
 			//model = new Model("obj/Testbox.obj");
@@ -253,6 +243,16 @@ int main(int argc, char* args[])
 
 				}
 			}
+			/*
+			SDL_SetRenderDrawColor(gRenderer, 255, 0, 0, 255);
+			line(128, 128, 384, 128);
+			
+			SDL_SetRenderDrawColor(gRenderer, 0, 255, 0, 255);
+			line(384, 128, 384, 384);
+			*/
+	
+
+
 			//Update screen
 			SDL_RenderPresent(gRenderer);
 		}
